@@ -1,131 +1,107 @@
-# AiSH - AI-Driven Shell Assistant
+# AiSH - Artificially Intelligent Shell (v0.1 Beta)
 
-    AiSH
-  🌟 An intelligent shell assistant powered by AI
+**AiSH** is an experimental command-line tool that blends AI smarts with shell functionality, letting you control your system through natural language or traditional commands.   
+**Heads up: this is a beta release (v0.1), so it’s buggy!** Some features might not work as expected, and we’d really appreciate it if you’d report any issues on [GitHub Issues](https://github.com/s41r4j/aish/issues). Better yet, if you spot something broken or have a cool feature idea, send us a pull request to fix it or add it—every contribution helps AiSH grow into a seriously useful tool. We’re counting on you to pitch in as much as you can, whether it’s a tiny tweak or a big upgrade. Let’s make this awesome together!
 
-**AiSH** (AI Shell) is a modular, interactive command-line tool that leverages AI to execute single commands, answer questions, and perform autonomous multi-step tasks on your system. Built with Python, it integrates with the Groq API (with Ollama support planned) and features a fancy, emoji-enhanced UI with command history and verbose mode.
+<br><hr><br>
 
-## Features
-- **Single Commands**: Execute simple shell commands (e.g., `list home dir contents` → `ls ~`).
-- **Autonomous Tasks**: Perform complex tasks step-by-step (e.g., `create a hello.txt with "hello world" written`).
-- **Questions**: Answer queries without execution (e.g., `what is your model`).
-- **Verbose Mode**: Display executed commands with `/verbose`.
-- **Fancy UI**: Terminal-safe emojis (🌟, 🚀, ✅) and structured formatting.
-- **History Navigation**: Use ↑↓ for previous commands, ←→ for editing, and auto-suggestions.
-- **Modular Design**: Separate modules for AI queries, system info, and task management.
+## 🚀 Installation
 
-## Requirements
-- Python 3.6+
-- Dependencies (listed in `requirements.txt`):
-  ```
-  colorama==0.4.6
-  psutil==5.9.8
-  requests==2.31.0
-  groq==0.5.0
-  python-dotenv==1.0.1
-  prompt_toolkit==3.0.47
-  ```
+AiSH runs on **Python 3.11+**. Here’s how to set it up:
 
-## Setup
-1. **Clone the Repository**:
+1. **Grab the Code**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/s41r4j/aish.git
    cd aish
+   python3 -m venv .venv
+   source .venv/bin/activate
    ```
+   For activating your new venv (windows; above is for linux/unix based systems):
+   - Run `./.venv/Scripts/Activate.ps1` via Powershell.
+   - Or run `./.venv/Scripts/Activate.bat` via cmd.
+   - Or on WSL/Linux, simply run source `./.venv/Scripts/activate`
+
 
 2. **Install Dependencies**:
    ```bash
-   pip install -r requirements.txt
+   pip install -r src/requirements.txt
    ```
 
-3. **Set Up Environment Variables**:
-   - Create a `.env` file in the project root:
-     ```bash
-     GROQ_API_KEY=your_groq_api_key_here
-     ```
-   - (Optional) For Ollama (not yet active):
-     ```
-     OLLAMA_METHOD=cli
-     OLLAMA_API_URL=http://localhost:11434/api/generate
-     OLLAMA_MODEL=deepseek-r1:1.5b
-     ```
-
-4. **Run AiSH**:
+3. **Launch AiSH**:
    ```bash
-   python3 aish.py
+   python3 src/aish.py
    ```
 
-## Usage
-Start AiSH and interact via the prompt:
-```
-=== 🌟 AiSH v0.1 ===
-  💻 OS       : Linux 5.15.0-73-generic
-  ⚙️ CPU      : 4 cores @ 12.5%
-  📦 RAM      : 7923 MB total, 3456 MB free
-Type '/help' for commands. Use ↑↓ for history, ←→ to edit, Ctrl+C to exit/stop.
-🌟 AiSH>
-```
+4. **Config File**:
+   The first time you run AiSH, it creates a config file at `~/.aishrc` (e.g., `/home/s41r4j/.aishrc` on Linux or `C:\Users\s41r4j\.aishrc` on Windows). Edit this YAML file to tweak settings like the prompt theme or AI backend—details are in the **Configuration** section below.
 
-### Commands
-- **AiSH Commands**: Prefix with `/`
-  - `/help`: Show available commands.
-  - `/system`: Display system info.
-  - `/verbose`: Toggle verbose mode (shows executed commands).
-  - `/exit` or `/quit`: Exit AiSH.
-- **Direct Shell Execution**: Prefix with `!`
-  - `!ls`: Runs `ls` directly.
-- **Normal Input**: AI interprets your intent
-  - `list home dir contents`: Executes `ls ~`.
-  - `what is your model`: Answers with text.
-  - `create a hello.txt with "hello world" written`: Autonomous task.
+<br><hr><br>
 
-### Examples
-1. **Single Command**:
-   ```
-   🌟 AiSH> list home dir contents
-   <home directory contents>
-   ```
+## 💡 Usage
 
-2. **Autonomous Task with Verbose**:
-   ```
-   🌟 AiSH> /verbose
-   📢 Verbose mode enabled
-   🌟 AiSH> create a hello.txt with "hello world" written
-   🚀 Starting task: create a hello.txt with "hello world" written
-   📢 Executing: echo "hello world" > hello.txt
-   ✅ Task completed
-   ```
+AiSH’s prompt accepts three types of commands:
 
-3. **Question**:
-   ```
-   🌟 AiSH> what is your model
-   ℹ️ I’m powered by deepseek-r1-distill-llama-70b via Groq
-   ```
+- **Natural Language (NL)**: Just type what you want in plain English, like `list all files` or `check disk space`, and AiSH figures out the command for you.
+- **Direct Shell Commands (`!`)**: Prefix with `!` to run raw shell commands, e.g., `!dir` (Windows) or `!ls` (Linux).
+- **AiSH-Specific Commands (`/`)**: Use `/` for built-ins like `/help` (see options) or `/exit` (quit).
 
-## Project Structure
-```
-.
-├── ai_interface.py    # AI query logic (Groq + Ollama)
-├── aish.py           # Main shell application
-├── README.md         # This file
-├── requirements.txt  # Dependencies
-├── system_info.py    # System information utilities
-├── task_manager.py   # Autonomous task processing
-├── TASKS.txt         # Task notes (if applicable)
-└── utils.py          # Command execution utilities
+### Quick Examples
+- NL: `show current time` → AiSH runs `date` or `time`.
+- `!`: `!echo "Hi!"` → Prints "Hi!".
+- `/`: `/prompt mood` → Switches to a fun emoji-based prompt.
+
+<br><hr><br>
+
+## ⚙️ Configuration
+
+AiSH creates a configuration file called .aishrc in your home directory (~/.aishrc on Linux/macOS or %USERPROFILE%\.aishrc on Windows) the first time you run it. You can tweak it to customize your experience.
+Settings You Can Change
+
+`prev_cmds_limit`: How many past commands to include in AI prompts (default: 5).  
+`prompt_theme`:  
+- `default`: Plain "AiSH> " prompt.  
+- `pwd`: Shows your current directory (e.g., "AiSH /home/user> ").  
+- `mood`: Adds an emoji (😊 for success, 😞 for failure).
+  
+`mode`: Set to "online" for AI features (default) or "offline" (not yet supported).  
+`online.current`: Pick your AI backend (e.g., "groq").  
+
+The `.aishrc` file (e.g., `/home/s41r4j/.aishrc`) lets you customize AiSH. EG:
+```yaml
+aish:
+  mode: online
+  prev_cmds_limit: 5
+  prompt_theme: default
+offline:
+  ollama_model: ''
+online:
+  apis:
+    gemini:
+      api_key: ''
+      model: 'gemini-2.0-flash'
+    groq:
+      api_key: ''
+      model: 'deepseek-r1-distill-llama-70b'
+  current: groq
+  fallback: gemini
 ```
 
-## Contributing
-Feel free to fork, submit PRs, or report issues! Future plans include:
-- Full Ollama integration.
-- Configuration via `.aishrc`.
-- Enhanced intent classification.
+> **NOTE: Currently AiSH only supports online modes with two apis -> [Gorq](https://console.groq.com/keys) (this works well) and [Gemini](https://aistudio.google.com/app/apikey); Ollama also works but has potential bugs**
 
-## License
-MIT License - Free to use, modify, and distribute.
+<br><hr><br>
 
-### **Notes**
-- **Branding**: Used `AiSH` consistently as the logo/name.
-- **Emojis**: Kept terminal-safe emojis (🌟, 🚀, etc.) from the code for a cohesive look.
-- **Setup**: Included `.env` setup for Groq API key, with placeholders for Ollama.
-- **Examples**: Mirrored the fancy UI output from your tests.
+## 🌱 Future Prospects
+
+AiSH aims to become a proper shell—like `bash`, `sh`, or `fish` on Linux, or `cmd` and PowerShell on Windows—but supercharged with AI. We’re focused on making it a standalone, powerful command-line environment. That’s the dream, and we’re sticking to it!
+
+---
+
+## 📢 Call for Feedback, Support, and Contributions
+
+AiSH v0.1 is rough around the edges, and we need your help to polish it up! Found a bug? Please report it on [GitHub Issues](https://github.com/s41r4j/aish/issues). Got a feature idea or a fix? Submit a pull request—we’d love your code! Even small contributions make a big difference in turning AiSH into a tool you’ll want to use every day. Share your thoughts, spread the word, and join us in building something great. What do you say—ready to help?
+
+<br><hr><br>
+
+
+
+That’s AiSH v0.1 (beta)! Dive in, play around, and let us know how we can make it better. Happy hacking!
