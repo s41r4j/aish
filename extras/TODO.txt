@@ -1,0 +1,14 @@
+{
+    add auto model selector then save prefenrence in .aishrc
+    /model /m
+
+        https://ai.google.dev/api/models#method:-models.list
+        curl https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY | jq '.models[].name | sub("^models/"; "")'
+    
+        https://console.groq.com/docs/models
+        curl -X GET "https://api.groq.com/openai/v1/models" -H "Authorization: Bearer $GROQ_API_KEY" -H "Content-Type: application/json" | jq '.data[].id'
+}
+{
+    - create the history file in the ~/ or win equvalent
+    - 
+}
