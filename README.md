@@ -1,5 +1,7 @@
 # AiSH - Artificially Intelligent Shell (v0.1 Beta)
 
+![logo](/extras/logos/AiSH_logo_v1.png)
+
 **AiSH** is an experimental command-line tool that blends AI smarts with shell functionality, letting you control your system through natural language or traditional commands.   
 **Heads up: this is a beta release (v0.1), so it’s buggy!** Some features might not work as expected, and we’d really appreciate it if you’d report any issues on [GitHub Issues](https://github.com/s41r4j/aish/issues). Better yet, if you spot something broken or have a cool feature idea, send us a pull request to fix it or add it—every contribution helps AiSH grow into a seriously useful tool. We’re counting on you to pitch in as much as you can, whether it’s a tiny tweak or a big upgrade. Let’s make this awesome together!
 
