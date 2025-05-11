@@ -1,9 +1,11 @@
-# AiSH: AI Shell Assistant
+# AiSH: _Artificially Intelligent Shell_
 
 ![image](https://github.com/user-attachments/assets/a2a45042-95b2-43fc-8fa0-7201b23707a9)
 
 
 **AiSH** (Artificially Intelligent Shell) is an autonomous, AI-driven shell assistant that interprets user input, generates shell commands, and executes them on your real machine. It supports both online (cloud LLMs) and offline (Ollama) modes, with robust error handling, command history, and dynamic configuration.
+
+> Beta Version 0.2
 
 <br>
 
@@ -30,9 +32,11 @@ pip install -r requirements.txt
 ### 2. Configure API Keys
 
 - On first run, `.aishrc` is created in your home directory.
-- It is recommended to add your API keys and preferred models using the commands `/config api edit <api> key <value>` and `/config api edit <api> model <value>`.
+- It is recommended to add your API keys and preferred models using the commands:
+  - `/config api edit <api> key <value>`
+  - `/config api edit <api> model <value>`
 - You can also add them directly in `.aishrc`, but above method is preferred.
-- API keys are securely encrypted automatically.
+> API keys are securely encrypted automatically.
 
 ### 3. Run AiSH
 
