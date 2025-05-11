@@ -1,0 +1,9 @@
+colorama
+psutil
+requests
+groq
+google-generativeai
+pyyaml
+prompt_toolkit
+openai
+cryptography
