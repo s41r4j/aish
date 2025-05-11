@@ -1,109 +1,100 @@
-# AiSH - Artificially Intelligent Shell (v0.1 Beta)
+# AiSH: AI Shell Assistant
 
-![logo](/extras/logos/AiSH_logo_v1.png)
-
-**AiSH** is an experimental command-line tool that blends AI smarts with shell functionality, letting you control your system through natural language or traditional commands.   
-**Heads up: this is a beta release (v0.1), so it’s buggy!** Some features might not work as expected, and we’d really appreciate it if you’d report any issues on [GitHub Issues](https://github.com/s41r4j/aish/issues). Better yet, if you spot something broken or have a cool feature idea, send us a pull request to fix it or add it—every contribution helps AiSH grow into a seriously useful tool. We’re counting on you to pitch in as much as you can, whether it’s a tiny tweak or a big upgrade. Let’s make this awesome together!
-
-<br><hr><br>
-
-## 🚀 Installation
-
-AiSH runs on **Python 3.11+**. Here’s how to set it up:
-
-1. **Grab the Code**:
-   ```bash
-   git clone https://github.com/s41r4j/aish.git
-   cd aish
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-   For activating your new venv (windows; above is for linux/unix based systems):
-   - Run `./.venv/Scripts/Activate.ps1` via Powershell.
-   - Or run `./.venv/Scripts/Activate.bat` via cmd.
-   - Or on WSL/Linux, simply run source `./.venv/Scripts/activate`
+![image](https://github.com/user-attachments/assets/a2a45042-95b2-43fc-8fa0-7201b23707a9)
 
 
-2. **Install Dependencies**:
-   ```bash
-   pip install -r src/requirements.txt
-   ```
+**AiSH** (Artificially Intelligent Shell) is an autonomous, AI-driven shell assistant that interprets user input, generates shell commands, and executes them on your real machine. It supports both online (cloud LLMs) and offline (Ollama) modes, with robust error handling, command history, and dynamic configuration.
 
-3. **Launch AiSH**:
-   ```bash
-   python3 src/aish.py
-   ```
+<br>
 
-4. **Config File**:
-   The first time you run AiSH, it creates a config file at `~/.aishrc` (e.g., `/home/s41r4j/.aishrc` on Linux or `C:\Users\s41r4j\.aishrc` on Windows). Edit this YAML file to tweak settings like the prompt theme or AI backend—details are in the **Configuration** section below.
+## Features
 
-<br><hr><br>
+- **AI-Powered Command Generation:** Converts natural language into shell commands using LLMs (Groq, Gemini, OpenRouter, Ollama).
+- **Autonomous Task Processing:** Breaks down complex tasks into step-by-step shell commands and executes them.
+- **Error Correction:** Uses AI to analyze and retry failed commands.
+- **Interactive Shell:** Enhanced prompt with auto-completion, history, and customizable themes.
+- **Secure API Key Storage:** API keys are encrypted using Fernet.
+- **Cross-Platform:** Works on Linux, macOS, and Windows.
 
-## 💡 Usage
 
-AiSH’s prompt accepts three types of commands:
+<br>
 
-- **Natural Language (NL)**: Just type what you want in plain English, like `list all files` or `check disk space`, and AiSH figures out the command for you.
-- **Direct Shell Commands (`!`)**: Prefix with `!` to run raw shell commands, e.g., `!dir` (Windows) or `!ls` (Linux).
-- **AiSH-Specific Commands (`/`)**: Use `/` for built-ins like `/help` (see options) or `/exit` (quit).
+## Getting Started
 
-### Quick Examples
-- NL: `show current time` → AiSH runs `date` or `time`.
-- `!`: `!echo "Hi!"` → Prints "Hi!".
-- `/`: `/prompt mood` → Switches to a fun emoji-based prompt.
+### 1. Install Requirements
 
-<br><hr><br>
-
-## ⚙️ Configuration
-
-AiSH creates a configuration file called .aishrc in your home directory (~/.aishrc on Linux/macOS or %USERPROFILE%\.aishrc on Windows) the first time you run it. You can tweak it to customize your experience.
-Settings You Can Change
-
-`prev_cmds_limit`: How many past commands to include in AI prompts (default: 5).  
-`prompt_theme`:  
-- `default`: Plain "AiSH> " prompt.  
-- `pwd`: Shows your current directory (e.g., "AiSH /home/user> ").  
-- `mood`: Adds an emoji (😊 for success, 😞 for failure).
-  
-`mode`: Set to "online" for AI features (default) or "offline" (not yet supported).  
-`online.current`: Pick your AI backend (e.g., "groq").  
-
-The `.aishrc` file (e.g., `/home/s41r4j/.aishrc`) lets you customize AiSH. EG:
-```yaml
-aish:
-  mode: online
-  prev_cmds_limit: 5
-  prompt_theme: default
-offline:
-  ollama_model: ''
-online:
-  apis:
-    gemini:
-      api_key: ''
-      model: 'gemini-2.0-flash'
-    groq:
-      api_key: ''
-      model: 'deepseek-r1-distill-llama-70b'
-  current: groq
-  fallback: gemini
+```sh
+pip install -r requirements.txt
 ```
 
-> **NOTE: Currently AiSH only supports online modes with two apis -> [Gorq](https://console.groq.com/keys) (this works well) and [Gemini](https://aistudio.google.com/app/apikey); Ollama also works but has potential bugs**
+### 2. Configure API Keys
 
-<br><hr><br>
+- On first run, `.aishrc` is created in your home directory.
+- It is recommended to add your API keys and preferred models using the commands `/config api edit <api> key <value>` and `/config api edit <api> model <value>`.
+- You can also add them directly in `.aishrc`, but above method is preferred.
+- API keys are securely encrypted automatically.
 
-## 🌱 Future Prospects
+### 3. Run AiSH
 
-AiSH aims to become a proper shell—like `bash`, `sh`, or `fish` on Linux, or `cmd` and PowerShell on Windows—but supercharged with AI. We’re focused on making it a standalone, powerful command-line environment. That’s the dream, and we’re sticking to it!
-
----
-
-## 📢 Call for Feedback, Support, and Contributions
-
-AiSH v0.1 is rough around the edges, and we need your help to polish it up! Found a bug? Please report it on [GitHub Issues](https://github.com/s41r4j/aish/issues). Got a feature idea or a fix? Submit a pull request—we’d love your code! Even small contributions make a big difference in turning AiSH into a tool you’ll want to use every day. Share your thoughts, spread the word, and join us in building something great. What do you say—ready to help?
-
-<br><hr><br>
+```sh
+python src/aish.py
+```
 
 
+<br>
 
-That’s AiSH v0.1 (beta)! Dive in, play around, and let us know how we can make it better. Happy hacking!
+## Usage
+
+### Shell Commands
+
+- Enter natural language requests (e.g., `list files in home directory`).
+- Use `/help` for a list of commands.
+
+### Special Commands
+
+| Command                | Description                                  |
+|------------------------|----------------------------------------------|
+| `/help` or `/h`        | Show help                                    |
+| `/verbose` or `/v`     | Toggle verbose mode                          |
+| `/config` or `/c`      | Configure APIs, history, etc.                |
+| `/prompt [theme]`      | Change prompt theme (default, pwd, mood)     |
+| `/exit` or `/e`        | Exit AiSH                                    |
+| `!<cmd>`               | Execute raw shell command                    |
+
+### Configuration
+
+- Use `/config api current <api>` to set the active AI provider.
+- Use `/config api edit <api> key <key>` to update API keys.
+- Use `/config api edit <api> model <model>` to update models.
+- Use `/config prev_cmds <n>` to set command history length in prompts.
+
+
+<br>
+
+## Security
+
+- API keys are securely stored and never saved in plaintext.
+- Your sensitive configuration remains protected at all times.
+
+
+<br>
+
+## Example Tasks
+
+- `list files and folders`
+- `write hello world python program`
+- `how much disk space is left?`
+- `is docker running?`
+
+
+<br>
+
+## Troubleshooting
+
+- If you see errors about missing API keys, edit `.aishrc` and add your keys.
+- For offline mode, ensure Ollama is running and the model is set in `.aishrc`.
+
+
+<br>
+
+For more details, see the code in the [src/](../src) directory.
