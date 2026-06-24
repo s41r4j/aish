@@ -17,7 +17,7 @@
 - **Interactive Shell:** Enhanced prompt with auto-completion, history, and customizable themes.
 - **Secure API Key Storage:** API keys are encrypted using Fernet.
 - **Cross-Platform:** Works on Linux, macOS, and Windows.
-
+- **Test**
 
 <br>
 
