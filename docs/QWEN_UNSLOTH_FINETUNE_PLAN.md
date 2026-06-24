@@ -4,14 +4,24 @@ This document defines the first practical model-training track for AiSH.
 
 ## Decision
 
-AiSH will start by fine-tuning a small Qwen-family model with Unsloth.
+AiSH will fine-tune a small Qwen-family model with Unsloth.
 
-Preferred order:
+After checking the currently visible official Qwen model pages, the practical first target should be:
 
 ```text
-1. Qwen3.5-0.8B, if the exact model ID is available
-2. Closest official sub-1B Qwen-family model, if Qwen3.5-0.8B is not available
-3. Around-2B Qwen-family model, if the sub-1B model is underwhelming
+1. Qwen/Qwen3-0.6B
+2. Qwen/Qwen3-1.7B if 0.6B is underwhelming
+3. Qwen/Qwen2.5-Coder-0.5B-Instruct as a coding-specialized comparison
+4. Qwen/Qwen2.5-Coder-1.5B-Instruct if the 0.5B coder model is too weak
+```
+
+Notes:
+
+```text
+- I did not find a verified official Qwen3.5-0.8B model ID.
+- Qwen3-0.6B is the closest verified sub-1B Qwen3 target.
+- Qwen3-1.7B is the closest verified step-up model near the original 2B fallback idea.
+- Qwen2.5-Coder-0.5B/1.5B are useful comparison baselines because AiSH is command/code-adjacent.
 ```
 
 The first goal is not to create a general chatbot. The model should be specialized for terminal command assistance.
@@ -27,6 +37,7 @@ The model should help with:
 - command alternative suggestions
 - shell-aware command translation
 - OS-aware command translation
+- structured command JSON for the AiSH runtime
 ```
 
 The model should not own execution.
@@ -63,11 +74,11 @@ Runtime layer:    detects risky/destructive commands
 UX layer:         asks for confirmation before risky execution
 ```
 
-The model can output commands, explanations, and alternatives. AiSH decides whether the command needs confirmation before execution.
+The model can output commands, explanations, alternatives, and structured JSON. AiSH decides whether the command needs confirmation before execution.
 
 ## Why Start Small
 
-The sub-1B model is the correct first experiment because AiSH needs low latency and on-device execution.
+A sub-1B model is the correct first experiment because AiSH needs low latency and on-device execution.
 
 Target behavior:
 
@@ -78,7 +89,7 @@ Target behavior:
 - useful for command generation when manually triggered
 ```
 
-If the sub-1B model cannot produce reliable commands after fine-tuning, move to an around-2B Qwen-family model.
+If Qwen3-0.6B cannot produce reliable commands after fine-tuning, move to Qwen3-1.7B.
 
 ## Training Method
 
@@ -96,6 +107,60 @@ Training style:   supervised fine-tuning
 ```
 
 The first training run should optimize output format and command correctness, not broad reasoning.
+
+## Recommended Model Experiments
+
+### Experiment A: Qwen3-0.6B
+
+```text
+Base model:       Qwen/Qwen3-0.6B
+Trainer:          Unsloth
+Method:           QLoRA
+Dataset size:     5k to 20k high-quality examples
+Eval set:         500 to 1k examples
+Goal:             fast local command generation
+```
+
+This is the primary first experiment.
+
+### Experiment B: Qwen3-1.7B
+
+```text
+Base model:       Qwen/Qwen3-1.7B
+Trainer:          Unsloth
+Method:           QLoRA
+Dataset size:     20k to 50k examples
+Eval set:         1k to 2k examples
+Goal:             better command generation and shell reasoning
+```
+
+Use this if Qwen3-0.6B is too weak.
+
+### Experiment C: Qwen2.5-Coder-0.5B-Instruct
+
+```text
+Base model:       Qwen/Qwen2.5-Coder-0.5B-Instruct
+Trainer:          Unsloth
+Method:           QLoRA
+Dataset size:     5k to 20k examples
+Eval set:         500 to 1k examples
+Goal:             compare code-specialized small model behavior
+```
+
+Use this as a small coder-specialized baseline.
+
+### Experiment D: Qwen2.5-Coder-1.5B-Instruct
+
+```text
+Base model:       Qwen/Qwen2.5-Coder-1.5B-Instruct
+Trainer:          Unsloth
+Method:           QLoRA
+Dataset size:     20k to 50k examples
+Eval set:         1k to 2k examples
+Goal:             stronger coder-specialized command model
+```
+
+Use this if the 0.5B coder model is too weak.
 
 ## Dataset Format
 
@@ -117,6 +182,12 @@ Example with alternatives:
 
 ```json
 {"instruction":"Suggest command alternatives.","input":"OS: linux\nShell: bash\nUser input: list files with details","output":"1. ls -la\n2. find . -maxdepth 1 -type f\n3. tree -a -L 1"}
+```
+
+Example with structured output:
+
+```json
+{"instruction":"Return structured command JSON for AiSH.","input":"OS: windows\nShell: powershell\nCWD type: unknown\nUser input: find process using port 3000","output":"{\"command\":\"netstat -ano | findstr :3000\",\"confidence\":0.86,\"requires_confirmation\":false,\"reason\":\"Lists processes bound to port 3000 on Windows.\"}"}
 ```
 
 ## Dataset Sources
@@ -151,7 +222,8 @@ Create separate buckets so evaluation is easier.
 5. shell_translation
 6. os_translation
 7. project_aware_commands
-8. risky_command_labeling
+8. structured_json_output
+9. risky_command_labeling
 ```
 
 The risky-command bucket is for labeling and explanation quality. Execution safety remains inside AiSH runtime, not inside the model.
@@ -179,33 +251,6 @@ npm run dev
 
 The structured JSON format is better for app integration. The command-only format is better for raw latency experiments.
 
-## First Fine-Tuning Target
-
-First experiment:
-
-```text
-Base model:       Qwen3.5-0.8B if available
-Fallback model:   closest Qwen sub-1B model
-Trainer:          Unsloth
-Method:           QLoRA
-Dataset size:     5k to 20k high-quality examples
-Eval set:         500 to 1k examples
-Goal:             command-focused behavior
-```
-
-## Second Fine-Tuning Target
-
-If the first model is underwhelming:
-
-```text
-Base model:       around-2B Qwen-family model
-Trainer:          Unsloth
-Method:           QLoRA
-Dataset size:     20k to 50k examples
-Eval set:         1k to 2k examples
-Goal:             better command generation and shell reasoning
-```
-
 ## Evaluation
 
 Measure:
@@ -222,7 +267,7 @@ Measure:
 - risky command flagging accuracy
 ```
 
-Minimum acceptance targets for the sub-1B model:
+Minimum acceptance targets for Qwen3-0.6B:
 
 ```text
 Command validity:        85%+
@@ -232,7 +277,7 @@ Useful top-3 rate:       75%+
 Risky flag recall:       95%+
 ```
 
-If it misses these after dataset cleanup and one retune, move to the around-2B model.
+If it misses these after dataset cleanup and one retune, move to Qwen3-1.7B or the Qwen2.5-Coder comparison path.
 
 ## Runtime Safety
 
@@ -280,7 +325,7 @@ AI path:    fine-tuned Qwen generator on manual trigger
 
 ## Final Recommendation
 
-Start with the Qwen sub-1B experiment through Unsloth, but keep the product architecture model-agnostic.
+Start with Qwen/Qwen3-0.6B through Unsloth, not an unverified 0.8B model ID.
 
 The correct first model milestone is:
 
