@@ -1,104 +1,193 @@
-# AiSH: _Artificially Intelligent Shell_
+# AiSH
 
-![image](https://github.com/user-attachments/assets/a2a45042-95b2-43fc-8fa0-7201b23707a9)
+**AiSH** is a cross-platform intelligent terminal app built around three live-switchable modes: normal terminal usage, history-based completion, and local AI-generated command assistance.
 
+AiSH is not just a shell plugin and it is not a chatbot CLI. It is a standalone terminal application that runs real shells inside its own UI and adds a smart input layer on top.
 
-**AiSH** (Artificially Intelligent Shell) is an autonomous, AI-driven shell assistant that interprets user input, generates shell commands, and executes them on your real machine. It supports both online (cloud LLMs) and offline (Ollama) modes, with robust error handling, command history, and dynamic configuration.
+## Core Idea
 
-> Beta Version 0.2
-
-<br>
-
-## Features
-
-- **AI-Powered Command Generation:** Converts natural language into shell commands using LLMs (Groq, Gemini, OpenRouter, Ollama).
-- **Autonomous Task Processing:** Breaks down complex tasks into step-by-step shell commands and executes them.
-- **Error Correction:** Uses AI to analyze and retry failed commands.
-- **Interactive Shell:** Enhanced prompt with auto-completion, history, and customizable themes.
-- **Secure API Key Storage:** API keys are encrypted using Fernet.
-- **Cross-Platform:** Works on Linux, macOS, and Windows.
-- **Test**
-
-<br>
-
-## Getting Started
-
-### 1. Install Requirements
-
-```sh
-pip install -r requirements.txt
+```text
+AiSH = terminal app + real shell runtime + smart completion layer
 ```
 
-### 2. Configure API Keys
+AiSH should work across:
 
-- On first run, `.aishrc` is created in your home directory.
-- It is recommended to add your API keys and preferred models using the commands:
-  - `/config api edit <api> key <value>`
-  - `/config api edit <api> model <value>`
-- You can also add them directly in `.aishrc`, but above method is preferred.
-> API keys are securely encrypted automatically.
-
-### 3. Run AiSH
-
-```sh
-python src/aish.py
+```text
+Windows: PowerShell, cmd, Git Bash
+macOS:   Zsh, Bash
+Linux:   Bash, Zsh, Fish
 ```
 
+The app owns the terminal UI, suggestion rendering, ghost text, dropdowns, shortcuts, command cards, and AI mode. The actual commands still execute through the user's selected shell.
 
-<br>
+## Modes
 
-## Usage
+### 1. Normal Mode
 
-### Shell Commands
+Plain terminal behavior.
 
-- Enter natural language requests (e.g., `list files in home directory`).
-- Use `/help` for a list of commands.
+```text
+No prediction
+No AI generation
+No smart completion
+Just type and run commands normally
+```
 
-### Special Commands
+This mode exists so AiSH always remains trustworthy and non-invasive.
 
-| Command                | Description                                  |
-|------------------------|----------------------------------------------|
-| `/help` or `/h`        | Show help                                    |
-| `/verbose` or `/v`     | Toggle verbose mode                          |
-| `/config` or `/c`      | Configure APIs, history, etc.                |
-| `/prompt [theme]`      | Change prompt theme (default, pwd, mood)     |
-| `/exit` or `/e`        | Exit AiSH                                    |
-| `!<cmd>`               | Execute raw shell command                    |
+### 2. History Mode
 
-### Configuration
+Suggests commands based on local usage.
 
-- Use `/config api current <api>` to set the active AI provider.
-- Use `/config api edit <api> key <key>` to update API keys.
-- Use `/config api edit <api> model <model>` to update models.
-- Use `/config prev_cmds <n>` to set command history length in prompts.
+AiSH uses:
 
+```text
+- recent commands
+- frequent commands
+- current working directory
+- project type
+- successful command patterns
+- current typed prefix
+```
 
-<br>
+Example:
 
-## Security
+```text
+User types: npm
+AiSH suggests: npm run dev
+```
 
-- API keys are securely stored and never saved in plaintext.
-- Your sensitive configuration remains protected at all times.
+History Mode should be the default mode for the first release because it is fast, private, and useful without needing an AI model.
 
+### 3. AI Mode
 
-<br>
+Generates command suggestions from user intent and local context.
 
-## Example Tasks
+Example:
 
-- `list files and folders`
-- `write hello world python program`
-- `how much disk space is left?`
-- `is docker running?`
+```text
+User types: find process using port 3000
+AiSH suggests: netstat -ano | findstr :3000
+```
 
+AI Mode should be opt-in or shortcut-triggered, not constantly running on every keystroke.
 
-<br>
+## Suggested Shortcuts
 
-## Troubleshooting
+```text
+Ctrl + 1         Normal Mode
+Ctrl + 2         History Mode
+Ctrl + 3         AI Mode
+Ctrl + Shift + M Cycle modes
+Tab              Accept suggestion
+Right Arrow      Accept ghost suggestion
+Ctrl + Space     Open suggestions / ask AI
+Esc              Dismiss suggestion
+Alt + Enter      Explain selected command
+```
 
-- If you see errors about missing API keys, edit `.aishrc` and add your keys.
-- For offline mode, ensure Ollama is running and the model is set in `.aishrc`.
+## Product Architecture
 
+```text
+User types in AiSH terminal
+        ↓
+AiSH input layer captures current line
+        ↓
+Mode router
+        ↓
+Normal Mode  → pass through only
+History Mode → local history scorer
+AI Mode      → local model + project context
+        ↓
+Suggestion UI
+        ↓
+User accepts suggestion
+        ↓
+Command is sent to the real shell
+```
 
-<br>
+## Technical Direction
 
-For more details, see the code in the [src/](../src) directory.
+Recommended stack:
+
+```text
+Desktop app:      Tauri + React
+Terminal UI:      xterm.js
+Native backend:   Rust
+Windows shell:    ConPTY
+macOS/Linux PTY:  Unix PTY
+Local storage:    SQLite
+Model runtime:    ONNX Runtime first, optional GGUF later
+```
+
+Recommended repo shape:
+
+```text
+aish/
+├── apps/
+│   └── desktop/
+├── crates/
+│   ├── aish-core/
+│   ├── aish-pty/
+│   ├── aish-history/
+│   ├── aish-completion/
+│   ├── aish-ai/
+│   └── aish-context/
+├── models/
+├── docs/
+│   └── MODEL_TRAINING_PLAN.md
+└── README.md
+```
+
+## First Release Scope
+
+The first version should focus on:
+
+```text
+- standalone terminal app
+- running real shells inside AiSH
+- mode switching
+- command history storage
+- history-based ghost suggestions
+- dropdown suggestions
+- project-aware completions for npm, git, docker, make, cargo, python
+- safety checks for dangerous AI-generated commands
+```
+
+The first version does not need a full generative model. A deterministic completion engine plus a lightweight ranker is the safer path.
+
+## Safety Rules
+
+AiSH should not silently suggest destructive commands.
+
+Examples of high-risk commands:
+
+```text
+rm -rf
+del /s /q
+git reset --hard
+docker system prune
+kubectl delete
+npm publish
+chmod -R 777
+```
+
+For risky commands, AiSH should require extra confirmation, show a warning, or avoid suggesting the command entirely.
+
+## Project Status
+
+This repository has been reset for the new AiSH direction.
+
+Old plan:
+
+```text
+Python CLI that uses cloud/offline LLMs to generate and execute commands
+```
+
+New plan:
+
+```text
+Cross-platform standalone terminal app with Normal, History, and AI modes
+```
+
+See [`docs/MODEL_TRAINING_PLAN.md`](docs/MODEL_TRAINING_PLAN.md) for the model-training roadmap.
