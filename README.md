@@ -1,190 +1,190 @@
-# AiSH
-
 ![image](https://github.com/user-attachments/assets/a2a45042-95b2-43fc-8fa0-7201b23707a9)
 
-**AiSH** is a cross-platform intelligent terminal app designed to make shell usage faster, safer, and more adaptive.
+# AiSH Beta
 
-AiSH is not just a shell plugin and it is not a chatbot CLI. It is a standalone terminal application that runs real shells inside its own interface and adds a smart input layer on top.
+AiSH Beta is an AI-native shell interface that converts natural language requests into shell commands.
+
+Instead of remembering exact command syntax, the user can describe what they want to do, and AiSH generates the matching command for the selected shell target.
+
+## What AiSH Does
+
+AiSH helps users interact with the terminal using natural language.
+
+Example:
 
 ```text
-AiSH = terminal app + real shell runtime + smart completion layer
+Find all Python files recursively from the current folder
 ```
+
+AiSH can turn that into a shell command such as:
+
+```bash
+find . -type f -name "*.py"
+```
+
+The goal is to make terminal usage faster, simpler, and more accessible while still keeping command execution under user control.
+
+## Supported Shell Targets
+
+AiSH Beta is designed to support:
+
+- Bash / Linux shell commands
+- PowerShell commands
+- CMD commands
+
+The main focus is command generation for common terminal workflows, development tasks, file operations, system inspection, networking, and automation.
 
 ## Core Idea
 
-AiSH works like a normal terminal first. Users can run their usual shells, while AiSH provides optional command completion, history-based suggestions, and local AI-generated command help.
+AiSH is not a traditional chatbot.
 
-Supported shell targets:
+It is a shell-first interface where the input is natural language and the output is a command or script that can be reviewed and executed.
 
-```text
-Windows: PowerShell, cmd, Git Bash
-macOS:   Zsh, Bash
-Linux:   Bash, Zsh, Fish
-```
-
-AiSH owns the terminal UI, suggestion rendering, ghost text, dropdowns, shortcuts, command cards, and AI mode. Actual commands still execute through the user-selected shell.
-
-## Modes
-
-### 1. Normal Mode
-
-Plain terminal behavior.
+The expected flow is:
 
 ```text
-No prediction
-No AI generation
-No smart completion
-Just type and run commands normally
+User request
+    ↓
+AiSH command generation
+    ↓
+Command preview
+    ↓
+User review
+    ↓
+Execution
 ```
 
-### 2. History Mode
+## Key Features
 
-Suggests commands based on local usage patterns.
+- Natural language to shell command generation
+- Bash and Linux command support
+- PowerShell command support
+- CMD command support
+- Local and edge-friendly model usage
+- Command preview before execution
+- Useful for developer, system, and terminal workflows
+- Designed for lightweight shell integration
 
-AiSH can use:
+## Example Requests
 
 ```text
-- recent commands
-- frequent commands
-- current working directory
-- project type
-- successful command patterns
-- current typed prefix
+Show the 20 largest files in this directory recursively
 ```
-
-Example:
 
 ```text
-User types: npm
-AiSH suggests: npm run dev
+Find all files modified in the last 24 hours
 ```
-
-### 3. AI Mode
-
-Generates command suggestions from user intent and local context.
-
-Example:
 
 ```text
-User types: find process using port 3000
-AiSH suggests: netstat -ano | findstr :3000
+Create a tar.gz backup of the current folder
 ```
-
-AI Mode should be opt-in or shortcut-triggered, not constantly running on every keystroke.
-
-## Suggested Shortcuts
 
 ```text
-Ctrl + 1         Normal Mode
-Ctrl + 2         History Mode
-Ctrl + 3         AI Mode
-Ctrl + Shift + M Cycle modes
-Tab              Accept suggestion
-Right Arrow      Accept ghost suggestion
-Ctrl + Space     Open suggestions / ask AI
-Esc              Dismiss suggestion
-Alt + Enter      Explain selected command
+List running processes sorted by memory usage
 ```
-
-## Product Architecture
 
 ```text
-User types in AiSH terminal
-        ↓
-AiSH input layer captures current line
-        ↓
-Mode router
-        ↓
-Normal Mode  → pass through only
-History Mode → local history scorer
-AI Mode      → local model + project context
-        ↓
-Suggestion UI
-        ↓
-User accepts suggestion
-        ↓
-Command is sent to the real shell
+Calculate the SHA256 hash of a file
 ```
 
-## Technical Direction
+## Safety Model
 
-Recommended stack:
+AiSH should generate safe, minimal, and clear commands.
 
-```text
-Desktop app:      Tauri + React
-Terminal UI:      xterm.js
-Native backend:   Rust
-Windows shell:    ConPTY
-macOS/Linux PTY:  Unix PTY
-Local storage:    SQLite
-Model runtime:    ONNX Runtime first, optional GGUF later
-```
+Commands should be shown to the user before execution, especially when they can modify, delete, overwrite, move, download, install, or execute files.
 
-Recommended repo shape:
-
-```text
-aish/
-├── apps/
-│   └── desktop/
-├── crates/
-│   ├── aish-core/
-│   ├── aish-pty/
-│   ├── aish-history/
-│   ├── aish-completion/
-│   ├── aish-ai/
-│   └── aish-context/
-├── models/
-├── docs/
-└── README.md
-```
-
-## First Release Scope
-
-The first version should focus on:
-
-```text
-- standalone terminal app
-- running real shells inside AiSH
-- mode switching
-- command history storage
-- history-based ghost suggestions
-- dropdown suggestions
-- project-aware completions for npm, git, docker, make, cargo, and python
-- safety checks for dangerous AI-generated commands
-```
-
-The first version does not need a full generative model. A deterministic completion engine plus a lightweight ranker is the safer path.
-
-## Safety Rules
-
-AiSH should not silently suggest destructive commands.
-
-Examples of high-risk commands:
-
-```text
-rm -rf
-del /s /q
-git reset --hard
-docker system prune
-kubectl delete
-npm publish
-chmod -R 777
-```
-
-For risky commands, AiSH should require extra confirmation, show a warning, or avoid suggesting the command entirely.
+AiSH should prefer review-first behavior over blind execution.
 
 ## Project Status
 
-This repository has been reset for the new AiSH direction.
+AiSH Beta is currently focused on local command generation and shell package development.
 
-Old direction:
+The current model is suitable for basic Bash and Linux workflows, with early-stage support for PowerShell and CMD workflows.
 
-```text
-Python CLI that uses cloud/offline LLMs to generate and execute commands
+## Current MVP
+
+This repository now contains the first Rust implementation of the `aish` binary.
+
+The current build includes:
+
+- Interactive shell mode with the `aish>` prompt
+- One-shot command generation mode
+- Bash, Zsh, PowerShell, and CMD target selection
+- Local AiSH config directory creation
+- Prompt builder for AiSH command generation
+- GGUF/llama.cpp runtime adapter
+- Mock runtime for development without a downloaded model
+- Safety classification: safe, risky, high-risk, blocked
+- Command preview before execution
+- Confirmation for risky and high-risk commands
+- Blocked destructive command refusal
+- Real shell execution through the selected shell adapter
+- Local command history and context storage
+
+## Local Development
+
+If Rust is installed:
+
+```bash
+cargo run -- --no-exec "find all Python files recursively"
 ```
 
-New direction:
+Interactive mode:
+
+```bash
+cargo run
+```
+
+Docker smoke test:
+
+```bash
+docker build -t aish-beta .
+docker run --rm -it aish-beta
+```
+
+The default development runtime is `mock`, so the CLI can be tested before the GGUF model and llama.cpp runtime are installed.
+
+To use the real GGUF runtime:
+
+```bash
+scripts/download-model.sh
+AISH_RUNTIME=llama.cpp AISH_LLAMA_BIN=llama-cli cargo run
+```
+
+The model is expected at:
 
 ```text
-Cross-platform standalone terminal app with Normal, History, and AI modes
+~/.aish/models/aish.gguf
 ```
+
+## Intended Use
+
+AiSH Beta is intended for:
+
+- Terminal productivity
+- Developer command generation
+- File and folder operations
+- Shell workflow automation
+- System inspection commands
+- Networking and CLI tasks
+- Local edge runtime experiments
+
+## Current Limitations
+
+- PowerShell and CMD support are still improving
+- Complex multi-step automation may require review
+- Generated commands should be checked before execution
+- Destructive commands should require explicit confirmation
+- AiSH Beta should not execute risky commands without user approval
+
+## Command Behavior
+
+By default, AiSH should output only the command or script unless the user asks for an explanation.
+
+The command should match the selected shell target and stay as simple as possible.
+
+## Summary
+
+AiSH Beta is an AI-native shell that lets users control the terminal through natural language.
+
+It aims to become a practical replacement layer for traditional command entry by generating shell commands from plain user requests.

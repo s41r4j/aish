@@ -1,0 +1,11 @@
+[package]
+name = "aish"
+version = "0.1.0"
+edition = "2021"
+description = "AiSH Beta: an AI-native shell that converts natural language into shell commands."
+license = "MIT"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

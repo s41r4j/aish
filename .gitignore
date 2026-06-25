@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+
+target/
+*.gguf
+
+.aish/
+history.db
+history.tsv
+logs/
+cache/
+
+.DS_Store
