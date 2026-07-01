@@ -1,0 +1,57 @@
+FROM rust:1.85-bookworm AS windows-builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates cmake g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 git zip \
+    && rm -rf /var/lib/apt/lists/* \
+    && rustup target add x86_64-pc-windows-gnu
+
+WORKDIR /app
+COPY Cargo.toml .
+COPY src ./src
+RUN cargo build --release --target x86_64-pc-windows-gnu
+
+ARG LLAMA_CPP_REF=master
+RUN cat > /tmp/mingw-thread-power.h <<'EOF'
+#include <windows.h>
+#ifndef THREAD_POWER_THROTTLING_CURRENT_VERSION
+#define THREAD_POWER_THROTTLING_CURRENT_VERSION 1
+#endif
+#ifndef THREAD_POWER_THROTTLING_EXECUTION_SPEED
+#define THREAD_POWER_THROTTLING_EXECUTION_SPEED 0x1
+#endif
+#ifndef ThreadPowerThrottling
+#define ThreadPowerThrottling ((THREAD_INFORMATION_CLASS)3)
+#endif
+#ifndef THREAD_POWER_THROTTLING_STATE
+typedef struct _THREAD_POWER_THROTTLING_STATE {
+    ULONG Version;
+    ULONG ControlMask;
+    ULONG StateMask;
+} THREAD_POWER_THROTTLING_STATE, *PTHREAD_POWER_THROTTLING_STATE;
+#endif
+EOF
+
+RUN git clone --depth 1 --branch "${LLAMA_CPP_REF}" https://github.com/ggml-org/llama.cpp.git /llama.cpp \
+    && cmake -S /llama.cpp -B /llama.cpp/build \
+      -DCMAKE_SYSTEM_NAME=Windows \
+      -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc-posix \
+      -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix \
+      -DBUILD_SHARED_LIBS=ON \
+      -DLLAMA_CURL=OFF \
+      -DGGML_NATIVE=OFF \
+      -DGGML_OPENMP=OFF \
+      -DCMAKE_C_FLAGS="-D_WIN32_WINNT=0x0A00 -include /tmp/mingw-thread-power.h" \
+      -DCMAKE_CXX_FLAGS="-D_WIN32_WINNT=0x0A00 -include /tmp/mingw-thread-power.h" \
+    && cmake --build /llama.cpp/build --config Release --target llama-cli -j2
+
+RUN mkdir -p /out/bin /out/runtime \
+    && cp /app/target/x86_64-pc-windows-gnu/release/aish.exe /out/bin/aish.exe \
+    && cp /llama.cpp/build/bin/llama-cli.exe /out/runtime/ \
+    && find /llama.cpp/build/bin -maxdepth 1 -name '*.dll' -exec cp {} /out/runtime/ \; \
+    && for file in \
+      /usr/lib/gcc/x86_64-w64-mingw32/*-posix/libgcc_s_seh-1.dll \
+      /usr/lib/gcc/x86_64-w64-mingw32/*-posix/libstdc++-6.dll \
+      /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll; do \
+        if [ -f "$file" ]; then cp "$file" /out/runtime/; fi; \
+      done

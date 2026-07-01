@@ -1,190 +1,139 @@
-![image](https://github.com/user-attachments/assets/a2a45042-95b2-43fc-8fa0-7201b23707a9)
+# AiSH
 
-# AiSH Beta
+AiSH is an AI-native interactive shell. You describe a task in natural language; AiSH generates the shell command internally, checks its risk, executes it, and returns the result.
 
-AiSH Beta is an AI-native shell interface that converts natural language requests into shell commands.
+Generated commands and routine safety metadata are hidden during normal use.
 
-Instead of remembering exact command syntax, the user can describe what they want to do, and AiSH generates the matching command for the selected shell target.
-
-## What AiSH Does
-
-AiSH helps users interact with the terminal using natural language.
-
-Example:
+## Interaction
 
 ```text
-Find all Python files recursively from the current folder
+$ aish
+AiSH
+Describe what you want to do. Type :help for settings or exit to quit.
+aish> find all Python files in this folder
+./src/main.py
+./tests/test_main.py
 ```
 
-AiSH can turn that into a shell command such as:
+AiSH has two output modes:
+
+- `raw` prints the command's stdout and stderr unchanged.
+- `natural` captures stdout and stderr, asks the local model to summarize them, and preserves exact paths, file names, identifiers, numbers, URLs, and errors.
+
+Switch modes inside AiSH:
+
+```text
+:output raw
+:output natural
+```
+
+Or choose the mode when starting it:
 
 ```bash
-find . -type f -name "*.py"
+aish --raw-output
+aish --natural-output
+aish -n "show the five largest files here"
 ```
 
-The goal is to make terminal usage faster, simpler, and more accessible while still keeping command execution under user control.
+Natural-language output can be the default in `~/.aish/config.toml`:
 
-## Supported Shell Targets
+```toml
+[output]
+natural_language_output = true
+```
 
-AiSH Beta is designed to support:
-
-- Bash / Linux shell commands
-- PowerShell commands
-- CMD commands
-
-The main focus is command generation for common terminal workflows, development tasks, file operations, system inspection, networking, and automation.
-
-## Core Idea
-
-AiSH is not a traditional chatbot.
-
-It is a shell-first interface where the input is natural language and the output is a command or script that can be reviewed and executed.
-
-The expected flow is:
+## Request Flow
 
 ```text
-User request
-    ↓
-AiSH command generation
-    ↓
-Command preview
-    ↓
-User review
-    ↓
-Execution
+natural-language request
+        |
+        v
+local model generates an internal command
+        |
+        v
+safety classifier
+        |
+        +-- blocked/high risk --> refuse or request confirmation
+        |
+        v
+selected system shell executes it
+        |
+        +-- raw mode ---------> stdout/stderr
+        |
+        +-- natural mode -----> local model summary
 ```
 
-## Key Features
+Safe commands execute without showing the generated command. Risky commands require confirmation and describe the risk without exposing the command. `--no-exec` remains available only as a development/debug preview.
 
-- Natural language to shell command generation
-- Bash and Linux command support
-- PowerShell command support
-- CMD command support
-- Local and edge-friendly model usage
-- Command preview before execution
-- Useful for developer, system, and terminal workflows
-- Designed for lightweight shell integration
+## Run Locally
 
-## Example Requests
-
-```text
-Show the 20 largest files in this directory recursively
-```
-
-```text
-Find all files modified in the last 24 hours
-```
-
-```text
-Create a tar.gz backup of the current folder
-```
-
-```text
-List running processes sorted by memory usage
-```
-
-```text
-Calculate the SHA256 hash of a file
-```
-
-## Safety Model
-
-AiSH should generate safe, minimal, and clear commands.
-
-Commands should be shown to the user before execution, especially when they can modify, delete, overwrite, move, download, install, or execute files.
-
-AiSH should prefer review-first behavior over blind execution.
-
-## Project Status
-
-AiSH Beta is currently focused on local command generation and shell package development.
-
-The current model is suitable for basic Bash and Linux workflows, with early-stage support for PowerShell and CMD workflows.
-
-## Current MVP
-
-This repository now contains the first Rust implementation of the `aish` binary.
-
-The current build includes:
-
-- Interactive shell mode with the `aish>` prompt
-- One-shot command generation mode
-- Bash, Zsh, PowerShell, and CMD target selection
-- Local AiSH config directory creation
-- Prompt builder for AiSH command generation
-- GGUF/llama.cpp runtime adapter
-- Mock runtime for development without a downloaded model
-- Safety classification: safe, risky, high-risk, blocked
-- Command preview before execution
-- Confirmation for risky and high-risk commands
-- Blocked destructive command refusal
-- Real shell execution through the selected shell adapter
-- Local command history and context storage
-
-## Local Development
-
-If Rust is installed:
-
-```bash
-cargo run -- --no-exec "find all Python files recursively"
-```
-
-Interactive mode:
+The default development backend is `mock`, so the UI can be tested without a model:
 
 ```bash
 cargo run
+cargo run -- --natural-output "list files"
 ```
 
-Docker smoke test:
+Run tests:
 
 ```bash
-docker build -t aish-beta .
-docker run --rm -it aish-beta
+cargo test
 ```
 
-The default development runtime is `mock`, so the CLI can be tested before the GGUF model and llama.cpp runtime are installed.
-
-To use the real GGUF runtime:
+Use the real local model:
 
 ```bash
 scripts/download-model.sh
 AISH_RUNTIME=llama.cpp AISH_LLAMA_BIN=llama-cli cargo run
 ```
 
-The model is expected at:
+The default model location is `~/.aish/models/aish.gguf`.
 
-```text
-~/.aish/models/aish.gguf
+## Bundle and Install
+
+AiSH itself compiles to one native executable:
+
+```bash
+chmod +x scripts/install-local.sh
+scripts/install-local.sh
 ```
 
-## Intended Use
+This builds a release binary and installs it at `~/.local/bin/aish`. Add that directory to `PATH`, then start the shell with:
 
-AiSH Beta is intended for:
+```bash
+aish
+```
 
-- Terminal productivity
-- Developer command generation
-- File and folder operations
-- Shell workflow automation
-- System inspection commands
-- Networking and CLI tasks
-- Local edge runtime experiments
+The executable is the orchestration layer. Real AI inference also needs:
 
-## Current Limitations
+- `llama-cli` available on `PATH`, or selected with `AISH_LLAMA_BIN`
+- the GGUF model at `~/.aish/models/aish.gguf`
 
-- PowerShell and CMD support are still improving
-- Complex multi-step automation may require review
-- Generated commands should be checked before execution
-- Destructive commands should require explicit confirmation
-- AiSH Beta should not execute risky commands without user approval
+For a single distributable environment containing AiSH and `llama-cli`, use Docker:
 
-## Command Behavior
+```bash
+docker build -t aish .
+docker run --rm -it -v aish-data:/home/aish/.aish aish
+```
 
-By default, AiSH should output only the command or script unless the user asks for an explanation.
+The Docker image contains the `aish` binary and `llama-cli`; the model is downloaded into the persistent `aish-data` volume on first use.
 
-The command should match the selected shell target and stay as simple as possible.
+## Source Structure
 
-## Summary
+```text
+src/main.rs       CLI entry point and help
+src/app.rs        interactive loop, output modes, safety and orchestration
+src/runtime.rs    command generation and natural-language summarization
+src/prompt.rs     command and summarization prompts/output cleaning
+src/shell.rs      Bash/Zsh/PowerShell/CMD execution and output capture
+src/safety.rs     command risk classification
+src/config.rs     ~/.aish configuration
+src/history.rs    local request/command history
+src/model.rs      GGUF model setup
+scripts/          local installer and model downloader
+Dockerfile        bundled Linux runtime image
+```
 
-AiSH Beta is an AI-native shell that lets users control the terminal through natural language.
+## Safety
 
-It aims to become a practical replacement layer for traditional command entry by generating shell commands from plain user requests.
+The model never decides execution policy. AiSH classifies every internal command as safe, risky, high-risk, or blocked. Risky operations require confirmation; extreme destructive operations remain blocked.

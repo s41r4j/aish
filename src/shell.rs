@@ -61,12 +61,18 @@ pub struct ShellExecutor {
     target: ShellTarget,
 }
 
+pub struct ExecutionOutput {
+    pub exit_code: i32,
+    pub stdout: String,
+    pub stderr: String,
+}
+
 impl ShellExecutor {
     pub fn new(target: ShellTarget) -> Self {
         Self { target }
     }
 
-    pub fn execute(&self, command: &str) -> Result<i32, String> {
+    pub fn execute(&self, command: &str) -> Result<ExecutionOutput, String> {
         let mut process = match self.target {
             ShellTarget::Bash => {
                 let mut command_process = Command::new("/bin/bash");
@@ -90,13 +96,22 @@ impl ShellExecutor {
             }
         };
 
-        let status = process
+        let output = process
             .stdin(Stdio::inherit())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()
-            .map_err(|err| format!("failed to execute command through {target}: {err}", target = self.target))?;
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|err| {
+                format!(
+                    "failed to execute command through {target}: {err}",
+                    target = self.target
+                )
+            })?;
 
-        Ok(status.code().unwrap_or(1))
+        Ok(ExecutionOutput {
+            exit_code: output.status.code().unwrap_or(1),
+            stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+        })
     }
 }

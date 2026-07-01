@@ -1,5 +1,6 @@
 mod app;
 mod config;
+mod context;
 mod history;
 mod model;
 mod paths;
@@ -44,16 +45,26 @@ fn print_help() {
 \n\
 Usage:\n\
   aish                         Start interactive shell mode\n\
-  aish \"find all Python files\"  Generate and handle one command\n\
+  aish \"find all Python files\"  Run one natural-language request\n\
 \n\
 Options:\n\
   --shell <bash|zsh|powershell|cmd>  Select target shell\n\
-  --no-exec                         Preview command without execution\n\
+  --natural-output, -n              Summarize execution output\n\
+  --raw-output                      Print execution output unchanged\n\
+  --no-exec                         Debug: generate without execution\n\
   --yes                             Skip confirmation for non-blocked commands\n\
   --help                            Show this help\n\
   --version                         Show version\n\
 \n\
 Environment:\n\
-  HF_TOKEN=...                       Token used for the first private model download"
+  AISH_RUNTIME=mock|llama.cpp         Override the configured runtime\n\
+  AISH_LLAMA_BIN=llama-cli            Override the llama.cpp executable\n\
+  HF_TOKEN=...                        Optional token for gated/private models\n\
+\n\
+Interactive commands:\n\
+  /                                 Show AiSH commands\n\
+  /context                          Show user, OS, shell, and path context\n\
+  /cd <path>                        Change AiSH working directory\n\
+  /pwd                              Show current directory"
     );
 }

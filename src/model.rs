@@ -1,30 +1,24 @@
 use crate::config::Config;
 use std::env;
 use std::fs;
+use std::io::{self, Write};
 use std::process::{Command, Stdio};
 
-pub fn ensure_model(config: &Config) -> Result<(), String> {
+pub fn ensure_model(config: &Config, assume_yes: bool) -> Result<(), String> {
     if config.model_path.exists() {
         return Ok(());
     }
 
-    fs::create_dir_all(&config.model_download_dir).map_err(|err| {
+    let model_dir = config
+        .model_path
+        .parent()
+        .unwrap_or(&config.model_download_dir);
+    fs::create_dir_all(model_dir).map_err(|err| {
         format!(
             "could not create model directory {}: {err}",
-            config.model_download_dir.display()
+            model_dir.display()
         )
     })?;
-
-    let token = env::var("HF_TOKEN").map_err(|_| {
-        format!(
-            "AiSH model is not installed yet. Set HF_TOKEN, then start AiSH again. The model will be saved to {}",
-            config.model_path.display()
-        )
-    })?;
-
-    if token.trim().is_empty() {
-        return Err("HF_TOKEN is empty. Set a valid Hugging Face token and start AiSH again.".to_string());
-    }
 
     let url = format!(
         "https://huggingface.co/{}/resolve/main/{}",
@@ -32,14 +26,26 @@ pub fn ensure_model(config: &Config) -> Result<(), String> {
     );
     let temp_path = config.model_path.with_extension("download");
 
-    eprintln!("Preparing AiSH model. This is a one-time download.");
+    eprintln!("AiSH model not found: {}", config.model_path.display());
+    eprintln!("Model source: {}/{}", config.model_repo, config.model_file);
+    eprintln!("This is a one-time download into your AiSH home directory.");
 
-    let status = Command::new("curl")
-        .arg("-L")
-        .arg("--fail")
-        .arg("--progress-bar")
-        .arg("-H")
-        .arg(format!("Authorization: Bearer {token}"))
+    if config.confirm_network_download && !assume_yes && !ask_download()? {
+        return Err("model download cancelled".to_string());
+    }
+
+    eprintln!("Preparing AiSH model.");
+
+    let mut command = Command::new("curl");
+    command.arg("-L").arg("--fail").arg("--progress-bar");
+    if let Ok(token) = env::var("HF_TOKEN") {
+        if !token.trim().is_empty() {
+            command
+                .arg("-H")
+                .arg(format!("Authorization: Bearer {token}"));
+        }
+    }
+    let status = command
         .arg("-o")
         .arg(&temp_path)
         .arg(&url)
@@ -50,8 +56,8 @@ pub fn ensure_model(config: &Config) -> Result<(), String> {
     if !status.success() {
         let _ = fs::remove_file(&temp_path);
         return Err(format!(
-            "model download failed. Check HF_TOKEN access to {}",
-            config.model_repo
+            "model download failed from {}/{}",
+            config.model_repo, config.model_file
         ));
     }
 
@@ -64,4 +70,19 @@ pub fn ensure_model(config: &Config) -> Result<(), String> {
 
     eprintln!("AiSH model is ready.");
     Ok(())
+}
+
+fn ask_download() -> Result<bool, String> {
+    eprint!("Download model now? [y/N] ");
+    io::stderr().flush().map_err(|err| err.to_string())?;
+
+    let mut answer = String::new();
+    io::stdin()
+        .read_line(&mut answer)
+        .map_err(|err| err.to_string())?;
+
+    Ok(matches!(
+        answer.trim().to_ascii_lowercase().as_str(),
+        "y" | "yes"
+    ))
 }

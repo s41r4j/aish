@@ -13,6 +13,7 @@ pub struct Config {
     pub model_file: String,
     pub auto_execute_safe: bool,
     pub confirm_risky: bool,
+    pub confirm_network_download: bool,
     pub block_extreme_risk: bool,
     pub context_enabled: bool,
     pub context_commands: usize,
@@ -24,6 +25,7 @@ pub struct Config {
     pub temperature: f32,
     pub max_tokens: usize,
     pub generation_timeout_seconds: u64,
+    pub natural_language_output: bool,
 }
 
 impl Config {
@@ -48,15 +50,16 @@ impl Config {
 }
 
 fn parse_config(text: &str, home: PathBuf) -> Config {
-        let mut config = Config {
+    let mut config = Config {
         model_download_dir: home.join("models"),
         model_path: home.join("models").join("aish.gguf"),
-        model_repo: "s41r4j/aish-qwen25-coder-1.5b-gguf-q4km-200".to_string(),
-        model_file: "qwen2.5-coder-1.5b-instruct.Q4_K_M.gguf".to_string(),
+        model_repo: "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF".to_string(),
+        model_file: "qwen2.5-coder-1.5b-instruct-q2_k.gguf".to_string(),
         aish_home: home,
         shell: ShellTarget::default_for_platform(),
         auto_execute_safe: true,
         confirm_risky: true,
+        confirm_network_download: true,
         block_extreme_risk: true,
         context_enabled: true,
         context_commands: 10,
@@ -68,6 +71,7 @@ fn parse_config(text: &str, home: PathBuf) -> Config {
         temperature: 0.0,
         max_tokens: 256,
         generation_timeout_seconds: 60,
+        natural_language_output: false,
     };
 
     for raw_line in text.lines() {
@@ -97,6 +101,9 @@ fn parse_config(text: &str, home: PathBuf) -> Config {
             "model_file" => config.model_file = value,
             "auto_execute_safe" => config.auto_execute_safe = parse_bool(&value, true),
             "confirm_risky" => config.confirm_risky = parse_bool(&value, true),
+            "confirm_network_download" => {
+                config.confirm_network_download = parse_bool(&value, true)
+            }
             "block_extreme_risk" => config.block_extreme_risk = parse_bool(&value, true),
             "enabled" => {
                 if raw_line.contains("[logging]") {
@@ -115,6 +122,7 @@ fn parse_config(text: &str, home: PathBuf) -> Config {
             "generation_timeout_seconds" => {
                 config.generation_timeout_seconds = value.parse().unwrap_or(60)
             }
+            "natural_language_output" => config.natural_language_output = parse_bool(&value, false),
             _ => {}
         }
     }
@@ -149,8 +157,8 @@ fn default_config_text(home: &PathBuf) -> String {
 shell = \"{shell}\"\n\
 model_download_dir = \"{model_download_dir}\"\n\
 model_path = \"{model_path}\"\n\
-model_repo = \"s41r4j/aish-qwen25-coder-1.5b-gguf-q4km-200\"\n\
-model_file = \"qwen2.5-coder-1.5b-instruct.Q4_K_M.gguf\"\n\
+model_repo = \"Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF\"\n\
+model_file = \"qwen2.5-coder-1.5b-instruct-q2_k.gguf\"\n\
 auto_execute_safe = true\n\
 confirm_risky = true\n\
 block_extreme_risk = true\n\
@@ -174,14 +182,18 @@ log_commands = false\n\
 log_model_prompts = false\n\
 \n\
 [runtime]\n\
-# Use \"mock\" for local development without a GGUF model.\n\
-# Change to \"llama.cpp\" when llama-cli and the GGUF model are installed.\n\
-runtime_backend = \"mock\"\n\
+# Use \"mock\" for development without a GGUF model.\n\
+# Packaged AiSH bundles llama-cli and downloads the GGUF model on first use.\n\
+runtime_backend = \"llama.cpp\"\n\
 runtime_command = \"llama-cli\"\n\
 threads = 4\n\
 context_size = 4096\n\
 temperature = 0.0\n\
 max_tokens = 256\n\
-generation_timeout_seconds = 60\n"
+generation_timeout_seconds = 60\n\
+\n\
+[output]\n\
+# false prints command output unchanged; true summarizes it in natural language.\n\
+natural_language_output = false\n"
     )
 }
